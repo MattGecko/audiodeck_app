@@ -22,6 +22,7 @@ function App() {
   const [settings, setSettings] = useState<Settings>(getInitialSettings());
   const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSoundId, setSelectedSoundId] = useState<string>();
   
   const { 
     loadSound,
@@ -114,6 +115,9 @@ function App() {
   const handleDeleteSound = (soundId: string) => {
     setSounds(prevSounds => prevSounds.filter(sound => sound.id !== soundId));
     stopSound(soundId);
+    if (selectedSoundId === soundId) {
+      setSelectedSoundId(undefined);
+    }
   };
 
   const handleUpdateSound = (soundId: string, updates: Partial<Sound>) => {
@@ -130,6 +134,15 @@ function App() {
     sound.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  useKeyboardShortcuts({
+    sounds: filteredSounds,
+    onPlay: playSound,
+    onStop: stopSound,
+    onDelete: handleDeleteSound,
+    selectedSoundId,
+    setSelectedSoundId,
+  });
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Header 
@@ -141,32 +154,24 @@ function App() {
         onSettingsClick={() => setShowSettings(true)}
       />
       <main className="container mx-auto px-4 py-8">
-        {sounds.length === 0 ? (
-          <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-            <button
-              onClick={handleImportClick}
-              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Upload a Track
-            </button>
-          </div>
-        ) : (
-          <SoundGrid
-            sounds={filteredSounds}
-            settings={settings}
-            isPlaying={playingSounds}
-            onPlay={playSound}
-            onStop={stopSound}
-            onSeek={seekSound}
-            onVolumeChange={setVolume}
-            onToggleFavorite={handleToggleFavorite}
-            onToggleLoop={handleToggleLoop}
-            onDelete={handleDeleteSound}
-            onUpdateSound={handleUpdateSound}
-            getCurrentTime={(id) => playbackInfo.get(id)?.currentTime || 0}
-            getDuration={(id) => playbackInfo.get(id)?.duration || 0}
-          />
-        )}
+        <SoundGrid
+          sounds={filteredSounds}
+          settings={settings}
+          isPlaying={playingSounds}
+          onPlay={playSound}
+          onStop={stopSound}
+          onSeek={seekSound}
+          onVolumeChange={setVolume}
+          onToggleFavorite={handleToggleFavorite}
+          onToggleLoop={handleToggleLoop}
+          onDelete={handleDeleteSound}
+          onUpdateSound={handleUpdateSound}
+          getCurrentTime={(id) => playbackInfo.get(id)?.currentTime || 0}
+          getDuration={(id) => playbackInfo.get(id)?.duration || 0}
+          onImportClick={handleImportClick}
+          selectedSoundId={selectedSoundId}
+          onSoundSelect={setSelectedSoundId}
+        />
       </main>
       <SettingsModal
         isOpen={showSettings}
